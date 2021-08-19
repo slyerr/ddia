@@ -1,5 +1,7 @@
 # 设计数据密集型应用 - 中文翻译
 
+> 由于个人喜好和为了存档创建了该分支，不定时同步原仓库，使用前请思虑
+
 - 作者： [Martin Kleppmann](https://martin.kleppmann.com)
 - 原名：[《Designing Data-Intensive Applications》](http://shop.oreilly.com/product/0636920032175.do)
 - 译者：[冯若航](https://vonng.com) （[@Vonng](https://vonng.com/en/)）
