@@ -1,13 +1,12 @@
-# 第三章：存储与检索 
+# 第三章：存储与检索
 
 ![](img/ch3.png)
 
 > 建立秩序，省却搜索
 >
 > ——德国谚语
->
 
--------------------
+---
 
 一个数据库在最基础的层次上需要完成两件事情：当你把数据交给数据库时，它应当把数据存储起来；而后当你向数据库要数据时，它应当把数据返回给你。
 
@@ -39,7 +38,7 @@ db_get () {
 麻雀虽小，五脏俱全：
 
 ```bash
-$ db_set 123456 '{"name":"London","attractions":["Big Ben","London Eye"]}' $ 
+$ db_set 123456 '{"name":"London","attractions":["Big Ben","London Eye"]}' $
 
 $ db_set 42 '{"name":"San Francisco","attractions":["Golden Gate Bridge"]}'
 
@@ -50,7 +49,7 @@ $ db_get 42
 底层的存储格式非常简单：一个文本文件，每行包含一条逗号分隔的键值对（忽略转义问题的话，大致与 CSV 文件类似）。每次对 `db_set` 的调用都会向文件末尾追加记录，所以更新键的时候旧版本的值不会被覆盖 —— 因而查找最新值的时候，需要找到文件中键最后一次出现的位置（因此 `db_get` 中使用了 `tail -n 1 ` 。)
 
 ```bash
-$ db_set 42 '{"name":"San Francisco","attractions":["Exploratorium"]}' 
+$ db_set 42 '{"name":"San Francisco","attractions":["Exploratorium"]}'
 
 $ db_get 42
 {"name":"San Francisco","attractions":["Exploratorium"]}
@@ -104,39 +103,39 @@ $ cat database
 每个段现在都有自己的内存散列表，将键映射到文件偏移量。为了找到一个键的值，我们首先检查最近段的哈希映射；如果键不存在，我们检查第二个最近的段，依此类推。合并过程保持细分的数量，所以查找不需要检查许多哈希映射。
 大量的细节进入实践这个简单的想法工作。简而言之，一些真正实施中重要的问题是：
 
-***文件格式***
+**_文件格式_**
 
-​	CSV 不是日志的最佳格式。使用二进制格式更快，更简单，首先以字节为单位对字符串的长度进行编码，然后使用原始字符串（不需要转义）。
+​ CSV 不是日志的最佳格式。使用二进制格式更快，更简单，首先以字节为单位对字符串的长度进行编码，然后使用原始字符串（不需要转义）。
 
-***删除记录***
+**_删除记录_**
 
 如果要删除一个键及其关联的值，则必须在数据文件（有时称为逻辑删除）中附加一个特殊的删除记录。当日志段被合并时，逻辑删除告诉合并过程放弃删除键的任何以前的值。
 
-***崩溃恢复***
+**_崩溃恢复_**
 
 如果数据库重新启动，则内存散列映射将丢失。原则上，您可以通过从头到尾读取整个段文件并在每次按键时注意每个键的最近值的偏移量来恢复每个段的哈希映射。但是，如果段文件很大，这可能需要很长时间，这将使服务器重新启动痛苦。 Bitcask 通过存储加速恢复磁盘上每个段的哈希映射的快照，可以更快地加载到内存中。
 
-***部分写入记录***
+**_部分写入记录_**
 
 数据库可能随时崩溃，包括将记录附加到日志中途。 Bitcask 文件包含校验和，允许检测和忽略日志的这些损坏部分。
 
-***并发控制***
+**_并发控制_**
 
 由于写操作是以严格顺序的顺序附加到日志中的，所以常见的实现选择是只有一个写入器线程。数据文件段是附加的，或者是不可变的，所以它们可以被多个线程同时读取。
 
 乍一看，只有追加日志看起来很浪费：为什么不更新文件，用新值覆盖旧值？但是只能追加设计的原因有几个：
 
-* 追加和分段合并是顺序写入操作，通常比随机写入快得多，尤其是在磁盘旋转硬盘上。在某种程度上，顺序写入在基于闪存的 **固态硬盘（SSD）** 上也是优选的【4】。我们将在第 83 页的“[比较 B 树和 LSM 树](#比较B树和LSM树)”中进一步讨论这个问题。
-* 如果段文件是附加的或不可变的，并发和崩溃恢复就简单多了。例如，您不必担心在覆盖值时发生崩溃的情况，而将包含旧值和新值的一部分的文件保留在一起。
-* 合并旧段可以避免数据文件随着时间的推移而分散的问题。
+- 追加和分段合并是顺序写入操作，通常比随机写入快得多，尤其是在磁盘旋转硬盘上。在某种程度上，顺序写入在基于闪存的 **固态硬盘（SSD）** 上也是优选的【4】。我们将在第 83 页的“[比较 B 树和 LSM 树](#比较B树和LSM树)”中进一步讨论这个问题。
+- 如果段文件是附加的或不可变的，并发和崩溃恢复就简单多了。例如，您不必担心在覆盖值时发生崩溃的情况，而将包含旧值和新值的一部分的文件保留在一起。
+- 合并旧段可以避免数据文件随着时间的推移而分散的问题。
 
 但是，哈希表索引也有局限性：
 
-* 散列表必须能放进内存
+- 散列表必须能放进内存
 
   如果你有非常多的键，那真是倒霉。原则上可以在磁盘上保留一个哈希映射，不幸的是磁盘哈希映射很难表现优秀。它需要大量的随机访问 I/O，当它变满时增长是很昂贵的，并且散列冲突需要很多的逻辑【5】。
 
-* 范围查询效率不高。例如，您无法轻松扫描 kitty00000 和 kitty99999 之间的所有键——您必须在散列映射中单独查找每个键。
+- 范围查询效率不高。例如，您无法轻松扫描 kitty00000 和 kitty99999 之间的所有键——您必须在散列映射中单独查找每个键。
 
 在下一节中，我们将看看一个没有这些限制的索引结构。
 
@@ -176,10 +175,10 @@ $ cat database
 
 现在我们可以使我们的存储引擎工作如下：
 
-* 写入时，将其添加到内存中的平衡树数据结构（例如，红黑树）。这个内存树有时被称为**内存表（memtable）**。
-* 当**内存表**大于某个阈值（通常为几兆字节）时，将其作为 SSTable 文件写入磁盘。这可以高效地完成，因为树已经维护了按键排序的键值对。新的 SSTable 文件成为数据库的最新部分。当 SSTable 被写入磁盘时，写入可以继续到一个新的内存表实例。
-* 为了提供读取请求，首先尝试在内存表中找到关键字，然后在最近的磁盘段中，然后在下一个较旧的段中找到该关键字。
-* 有时会在后台运行合并和压缩过程以组合段文件并丢弃覆盖或删除的值。
+- 写入时，将其添加到内存中的平衡树数据结构（例如，红黑树）。这个内存树有时被称为**内存表（memtable）**。
+- 当**内存表**大于某个阈值（通常为几兆字节）时，将其作为 SSTable 文件写入磁盘。这可以高效地完成，因为树已经维护了按键排序的键值对。新的 SSTable 文件成为数据库的最新部分。当 SSTable 被写入磁盘时，写入可以继续到一个新的内存表实例。
+- 为了提供读取请求，首先尝试在内存表中找到关键字，然后在最近的磁盘段中，然后在下一个较旧的段中找到该关键字。
+- 有时会在后台运行合并和压缩过程以组合段文件并丢弃覆盖或删除的值。
 
 这个方案效果很好。它只会遇到一个问题：如果数据库崩溃，则最近的写入（在内存表中，但尚未写入磁盘）将丢失。为了避免这个问题，我们可以在磁盘上保存一个单独的日志，每个写入都会立即被附加到磁盘上，就像在前一节中一样。该日志不是按排序顺序，但这并不重要，因为它的唯一目的是在崩溃后恢复内存表。每当内存表写出到 SSTable 时，相应的日志都可以被丢弃。
 
@@ -247,11 +246,11 @@ B 树的基本底层写操作是用新数据覆盖磁盘上的页面。假定覆
 
 由于 B 树已经存在了这么久，许多优化已经发展了多年，这并不奇怪。仅举几例：
 
-* 一些数据库（如 LMDB）使用写时复制方案【21】，而不是覆盖页面并维护 WAL 进行崩溃恢复。修改的页面被写入到不同的位置，并且树中的父页面的新版本被创建，指向新的位置。这种方法对于并发控制也很有用，我们将在“[快照隔离和可重复读](ch7.md#快照隔离和可重复读)”中看到。
-* 我们可以通过不存储整个键，而是缩短其大小，来节省页面空间。特别是在树内部的页面上，键只需要提供足够的信息来充当键范围之间的边界。在页面中包含更多的键允许树具有更高的分支因子，因此更少的层次。
-* 通常，页面可以放置在磁盘上的任何位置；没有什么要求附近的键放在页面附近的磁盘上。如果查询需要按照排序顺序扫描大部分关键字范围，那么这种按页面存储的布局可能会效率低下，因为每个读取的页面都可能需要磁盘寻道。因此，许多 B 树实现尝试布局树，使得叶子页面按顺序出现在磁盘上。但是，随着树的增长，维持这个顺序是很困难的。相比之下，由于 LSM 树在合并过程中一次又一次地重写存储的大部分，所以它们更容易使顺序键在磁盘上彼此靠近。
-* 额外的指针已添加到树中。例如，每个叶子页面可以在左边和右边具有对其兄弟页面的引用，这允许不跳回父页面就能顺序扫描。
-* B 树的变体如分形树【22】借用一些日志结构的思想来减少磁盘寻道（而且它们与分形无关）。
+- 一些数据库（如 LMDB）使用写时复制方案【21】，而不是覆盖页面并维护 WAL 进行崩溃恢复。修改的页面被写入到不同的位置，并且树中的父页面的新版本被创建，指向新的位置。这种方法对于并发控制也很有用，我们将在“[快照隔离和可重复读](ch7.md#快照隔离和可重复读)”中看到。
+- 我们可以通过不存储整个键，而是缩短其大小，来节省页面空间。特别是在树内部的页面上，键只需要提供足够的信息来充当键范围之间的边界。在页面中包含更多的键允许树具有更高的分支因子，因此更少的层次。
+- 通常，页面可以放置在磁盘上的任何位置；没有什么要求附近的键放在页面附近的磁盘上。如果查询需要按照排序顺序扫描大部分关键字范围，那么这种按页面存储的布局可能会效率低下，因为每个读取的页面都可能需要磁盘寻道。因此，许多 B 树实现尝试布局树，使得叶子页面按顺序出现在磁盘上。但是，随着树的增长，维持这个顺序是很困难的。相比之下，由于 LSM 树在合并过程中一次又一次地重写存储的大部分，所以它们更容易使顺序键在磁盘上彼此靠近。
+- 额外的指针已添加到树中。例如，每个叶子页面可以在左边和右边具有对其兄弟页面的引用，这允许不跳回父页面就能顺序扫描。
+- B 树的变体如分形树【22】借用一些日志结构的思想来减少磁盘寻道（而且它们与分形无关）。
 
 ### 比较 B 树和 LSM 树
 
@@ -313,7 +312,7 @@ B 树在数据库体系结构中是非常根深蒂固的，为许多工作负载
 **多维索引（multi-dimensional index）** 是一种查询多个列的更一般的方法，这对于地理空间数据尤为重要。例如，餐厅搜索网站可能有一个数据库，其中包含每个餐厅的经度和纬度。当用户在地图上查看餐馆时，网站需要搜索用户正在查看的矩形地图区域内的所有餐馆。这需要一个二维范围查询，如下所示：
 
 ```sql
-SELECT * FROM restaurants WHERE latitude > 51.4946 AND latitude < 51.5079 
+SELECT * FROM restaurants WHERE latitude > 51.4946 AND latitude < 51.5079
                            AND longitude > -0.1162 AND longitude < -0.1004;
 ```
 
@@ -355,7 +354,7 @@ SELECT * FROM restaurants WHERE latitude > 51.4946 AND latitude < 51.5079
 
 ## 事务处理还是分析？
 
-在早期业务数据处理过程中，一次典型的数据库写入通常与一笔 *商业交易（commercial transaction）* 相对应：卖个货，向供应商下订单，支付员工工资等等。但随着数据库应用至那些不涉及到钱的领域，术语 **交易 / 事务（transaction）** 仍留了下来，用于指代一组读写操作构成的逻辑单元。
+在早期业务数据处理过程中，一次典型的数据库写入通常与一笔 _商业交易（commercial transaction）_ 相对应：卖个货，向供应商下订单，支付员工工资等等。但随着数据库应用至那些不涉及到钱的领域，术语 **交易 / 事务（transaction）** 仍留了下来，用于指代一组读写操作构成的逻辑单元。
 
 事务不一定具有 ACID（原子性，一致性，隔离性和持久性）属性。事务处理只是意味着允许客户端进行低延迟读取和写入 —— 而不是批量处理作业，而这些作业只能定期运行（例如每天一次）。我们在[第 7 章](ch7.md)中讨论 ACID 属性，在[第 10 章](ch10.md)中讨论批处理。
 
@@ -363,9 +362,9 @@ SELECT * FROM restaurants WHERE latitude > 51.4946 AND latitude < 51.5079
 
 但是，数据库也开始越来越多地用于数据分析，这些数据分析具有非常不同的访问模式。通常，分析查询需要扫描大量记录，每个记录只读取几列，并计算汇总统计信息（如计数，总和或平均值），而不是将原始数据返回给用户。例如，如果您的数据是一个销售交易表，那么分析查询可能是：
 
-* 一月份每个商店的总收入是多少？
-* 在最近的推广活动中多卖了多少香蕉？
-* 哪个牌子的婴儿食品最常与 X 品牌的尿布同时购买？
+- 一月份每个商店的总收入是多少？
+- 在最近的推广活动中多卖了多少香蕉？
+- 哪个牌子的婴儿食品最常与 X 品牌的尿布同时购买？
 
 这些查询通常由业务分析师编写，并提供给帮助公司管理层做出更好决策（商业智能）的报告。为了将这种使用数据库的模式和事务处理区分开，它被称为**在线分析处理（OLAP, OnLine Analytice Processing）**。【47】。OLTP 和 OLAP 之间的区别并不总是清晰的，但是一些典型的特征在[表 3-1]()中列出。
 
@@ -375,7 +374,7 @@ SELECT * FROM restaurants WHERE latitude > 51.4946 AND latitude < 51.5079
 | :----------: | :--------------------------: | :----------------------: |
 | 主要读取模式 |    查询少量记录，按键读取    |    在大批量记录上聚合    |
 | 主要写入模式 |   随机访问，写入要求低延时   | 批量导入（ETL），事件流  |
-|   主要用户   |    终端用户，通过 Web 应用     | 内部数据分析师，决策支持 |
+|   主要用户   |   终端用户，通过 Web 应用    | 内部数据分析师，决策支持 |
 |  处理的数据  | 数据的最新状态（当前时间点） |   随时间推移的历史事件   |
 |  数据集尺寸  |           GB ~ TB            |         TB ~ PB          |
 
@@ -490,7 +489,7 @@ GROUP BY
 WHERE product_sk IN（30，68，69）
 ```
 
-加载 `product_sk = 30` ,  `product_sk = 68` ,  `product_sk = 69` 的三个位图，并计算三个位图的按位或，这可以非常有效地完成。
+加载 `product_sk = 30` , `product_sk = 68` , `product_sk = 69` 的三个位图，并计算三个位图的按位或，这可以非常有效地完成。
 
 ```sql
 WHERE product_sk = 31 AND store_sk = 3
@@ -503,7 +502,6 @@ WHERE product_sk = 31 AND store_sk = 3
 > #### 面向列的存储和列族
 >
 > Cassandra 和 HBase 有一个列族的概念，他们从 Bigtable 继承【9】。然而，把它们称为面向列是非常具有误导性的：在每个列族中，它们将一行中的所有列与行键一起存储，并且不使用列压缩。因此，Bigtable 模型仍然主要是面向行的。
->
 
 #### 内存带宽和向量处理
 
@@ -571,16 +569,16 @@ WHERE product_sk = 31 AND store_sk = 3
 
 在高层次上，我们看到存储引擎分为两大类：优化 **事务处理（OLTP）** 或 **在线分析（OLAP）** 。这些用例的访问模式之间有很大的区别：
 
-* OLTP 系统通常面向用户，这意味着系统可能会收到大量的请求。为了处理负载，应用程序通常只访问每个查询中的少部分记录。应用程序使用某种键来请求记录，存储引擎使用索引来查找所请求的键的数据。磁盘寻道时间往往是这里的瓶颈。
-* 数据仓库和类似的分析系统会低调一些，因为它们主要由业务分析人员使用，而不是由最终用户使用。它们的查询量要比 OLTP 系统少得多，但通常每个查询开销高昂，需要在短时间内扫描数百万条记录。磁盘带宽（而不是查找时间）往往是瓶颈，列式存储是这种工作负载越来越流行的解决方案。
+- OLTP 系统通常面向用户，这意味着系统可能会收到大量的请求。为了处理负载，应用程序通常只访问每个查询中的少部分记录。应用程序使用某种键来请求记录，存储引擎使用索引来查找所请求的键的数据。磁盘寻道时间往往是这里的瓶颈。
+- 数据仓库和类似的分析系统会低调一些，因为它们主要由业务分析人员使用，而不是由最终用户使用。它们的查询量要比 OLTP 系统少得多，但通常每个查询开销高昂，需要在短时间内扫描数百万条记录。磁盘带宽（而不是查找时间）往往是瓶颈，列式存储是这种工作负载越来越流行的解决方案。
 
 在 OLTP 方面，我们能看到两派主流的存储引擎：
 
-***日志结构学派***
+**_日志结构学派_**
 
 只允许附加到文件和删除过时的文件，但不会更新已经写入的文件。 Bitcask，SSTables，LSM 树，LevelDB，Cassandra，HBase，Lucene 等都属于这个类别。
 
-***就地更新学派***
+**_就地更新学派_**
 
 将磁盘视为一组可以覆写的固定大小的页面。 B 树是这种哲学的典范，用在所有主要的关系数据库中和许多非关系型数据库。
 
@@ -594,139 +592,139 @@ WHERE product_sk = 31 AND store_sk = 3
 
 ## 参考文献
 
-1. Alfred V. Aho, John E. Hopcroft, and Jeffrey D. Ullman: *Data Structures and Algorithms*. Addison-Wesley, 1983. ISBN: 978-0-201-00023-8
+1. Alfred V. Aho, John E. Hopcroft, and Jeffrey D. Ullman: _Data Structures and Algorithms_. Addison-Wesley, 1983. ISBN: 978-0-201-00023-8
 
-1. Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein: *Introduction to Algorithms*, 3rd edition. MIT Press, 2009. ISBN: 978-0-262-53305-8
+1. Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein: _Introduction to Algorithms_, 3rd edition. MIT Press, 2009. ISBN: 978-0-262-53305-8
 
 1. Justin Sheehy and David Smith: “[Bitcask: A Log-Structured Hash Table for Fast Key/Value Data](http://basho.com/wp-content/uploads/2015/05/bitcask-intro.pdf),” Basho Technologies, April 2010.
 
-1. Yinan Li, Bingsheng He, Robin Jun Yang, et al.:   “[Tree Indexing on Solid State Drives](http://www.vldb.org/pvldb/vldb2010/papers/R106.pdf),”  *Proceedings of the VLDB Endowment*, volume 3, number 1, pages 1195–1206,  September 2010.
+1. Yinan Li, Bingsheng He, Robin Jun Yang, et al.: “[Tree Indexing on Solid State Drives](http://www.vldb.org/pvldb/vldb2010/papers/R106.pdf),” _Proceedings of the VLDB Endowment_, volume 3, number 1, pages 1195–1206, September 2010.
 
-1. Goetz Graefe:  “[Modern B-Tree Techniques](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.219.7269&rep=rep1&type=pdf),”   *Foundations and Trends in Databases*, volume 3, number 4, pages 203–402, August 2011.  [doi:10.1561/1900000028](http://dx.doi.org/10.1561/1900000028)
+1. Goetz Graefe: “[Modern B-Tree Techniques](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.219.7269&rep=rep1&type=pdf),” _Foundations and Trends in Databases_, volume 3, number 4, pages 203–402, August 2011. [doi:10.1561/1900000028](http://dx.doi.org/10.1561/1900000028)
 
-1. Jeffrey Dean and Sanjay Ghemawat: “[LevelDB Implementation Notes](https://github.com/google/leveldb/blob/master/doc/impl.html),” *leveldb.googlecode.com*.
+1. Jeffrey Dean and Sanjay Ghemawat: “[LevelDB Implementation Notes](https://github.com/google/leveldb/blob/master/doc/impl.html),” _leveldb.googlecode.com_.
 
-1. Dhruba Borthakur: “[The History of RocksDB](http://rocksdb.blogspot.com/),” *rocksdb.blogspot.com*, November 24, 2013.
+1. Dhruba Borthakur: “[The History of RocksDB](http://rocksdb.blogspot.com/),” _rocksdb.blogspot.com_, November 24, 2013.
 
-1. Matteo Bertozzi: “[Apache HBase I/O – HFile](http://blog.cloudera.com/blog/2012/06/hbase-io-hfile-input-output/),” *blog.cloudera.com*, June, 29 2012.
+1. Matteo Bertozzi: “[Apache HBase I/O – HFile](http://blog.cloudera.com/blog/2012/06/hbase-io-hfile-input-output/),” _blog.cloudera.com_, June, 29 2012.
 
-1. Fay Chang, Jeffrey Dean, Sanjay Ghemawat, et al.: “[Bigtable: A Distributed Storage System for Structured Data](http://research.google.com/archive/bigtable.html),” at *7th USENIX Symposium on Operating System Design and Implementation* (OSDI), November 2006.
+1. Fay Chang, Jeffrey Dean, Sanjay Ghemawat, et al.: “[Bigtable: A Distributed Storage System for Structured Data](http://research.google.com/archive/bigtable.html),” at _7th USENIX Symposium on Operating System Design and Implementation_ (OSDI), November 2006.
 
-1. Patrick O'Neil, Edward Cheng, Dieter Gawlick, and Elizabeth O'Neil: “[The Log-Structured Merge-Tree (LSM-Tree)](http://www.cs.umb.edu/~poneil/lsmtree.pdf),” *Acta Informatica*, volume 33, number 4, pages 351–385, June 1996. [doi:10.1007/s002360050048](http://dx.doi.org/10.1007/s002360050048)
+1. Patrick O'Neil, Edward Cheng, Dieter Gawlick, and Elizabeth O'Neil: “[The Log-Structured Merge-Tree (LSM-Tree)](http://www.cs.umb.edu/~poneil/lsmtree.pdf),” _Acta Informatica_, volume 33, number 4, pages 351–385, June 1996. [doi:10.1007/s002360050048](http://dx.doi.org/10.1007/s002360050048)
 
-1. Mendel Rosenblum and John K. Ousterhout: “[The Design and Implementation of a Log-Structured File System](http://research.cs.wisc.edu/areas/os/Qual/papers/lfs.pdf),” *ACM Transactions on Computer Systems*, volume 10, number 1, pages 26–52, February 1992.
-    [doi:10.1145/146941.146943](http://dx.doi.org/10.1145/146941.146943)
+1. Mendel Rosenblum and John K. Ousterhout: “[The Design and Implementation of a Log-Structured File System](http://research.cs.wisc.edu/areas/os/Qual/papers/lfs.pdf),” _ACM Transactions on Computer Systems_, volume 10, number 1, pages 26–52, February 1992.
+   [doi:10.1145/146941.146943](http://dx.doi.org/10.1145/146941.146943)
 
-1. Adrien Grand: “[What Is in a Lucene Index?](http://www.slideshare.net/lucenerevolution/what-is-inaluceneagrandfinal),” at *Lucene/Solr Revolution*, November 14, 2013.
+1. Adrien Grand: “[What Is in a Lucene Index?](http://www.slideshare.net/lucenerevolution/what-is-inaluceneagrandfinal),” at _Lucene/Solr Revolution_, November 14, 2013.
 
-1. Deepak Kandepet: “[Hacking Lucene—The Index Format]( http://hackerlabs.github.io/blog/2011/10/01/hacking-lucene-the-index-format/index.html),” *hackerlabs.org*, October 1, 2011.
+1. Deepak Kandepet: “[Hacking Lucene—The Index Format](http://hackerlabs.github.io/blog/2011/10/01/hacking-lucene-the-index-format/index.html),” _hackerlabs.org_, October 1, 2011.
 
-1. Michael McCandless: “[Visualizing Lucene's Segment Merges](http://blog.mikemccandless.com/2011/02/visualizing-lucenes-segment-merges.html),” *blog.mikemccandless.com*, February 11, 2011.
+1. Michael McCandless: “[Visualizing Lucene's Segment Merges](http://blog.mikemccandless.com/2011/02/visualizing-lucenes-segment-merges.html),” _blog.mikemccandless.com_, February 11, 2011.
 
-1. Burton H. Bloom: “[Space/Time Trade-offs in Hash Coding with Allowable Errors](http://www.cs.upc.edu/~diaz/p422-bloom.pdf),” *Communications of the ACM*, volume 13, number 7, pages 422–426, July 1970. [doi:10.1145/362686.362692](http://dx.doi.org/10.1145/362686.362692)
+1. Burton H. Bloom: “[Space/Time Trade-offs in Hash Coding with Allowable Errors](http://www.cs.upc.edu/~diaz/p422-bloom.pdf),” _Communications of the ACM_, volume 13, number 7, pages 422–426, July 1970. [doi:10.1145/362686.362692](http://dx.doi.org/10.1145/362686.362692)
 
 1. “[Operating Cassandra: Compaction](https://cassandra.apache.org/doc/latest/operating/compaction.html),” Apache Cassandra Documentation v4.0, 2016.
 
 1. Rudolf Bayer and Edward M. McCreight: “[Organization and Maintenance of Large Ordered Indices](http://www.dtic.mil/cgi-bin/GetTRDoc?AD=AD0712079),” Boeing Scientific Research Laboratories, Mathematical and Information Sciences Laboratory, report no. 20, July 1970.
 
-1. Douglas Comer: “[The Ubiquitous B-Tree](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.96.6637&rep=rep1&type=pdf),” *ACM Computing Surveys*, volume 11, number 2, pages 121–137, June 1979. [doi:10.1145/356770.356776](http://dx.doi.org/10.1145/356770.356776)
+1. Douglas Comer: “[The Ubiquitous B-Tree](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.96.6637&rep=rep1&type=pdf),” _ACM Computing Surveys_, volume 11, number 2, pages 121–137, June 1979. [doi:10.1145/356770.356776](http://dx.doi.org/10.1145/356770.356776)
 
-1. Emmanuel Goossaert: “[Coding for SSDs](http://codecapsule.com/2014/02/12/coding-for-ssds-part-1-introduction-and-table-of-contents/),” *codecapsule.com*, February 12, 2014.
+1. Emmanuel Goossaert: “[Coding for SSDs](http://codecapsule.com/2014/02/12/coding-for-ssds-part-1-introduction-and-table-of-contents/),” _codecapsule.com_, February 12, 2014.
 
-1. C. Mohan and Frank Levine: “[ARIES/IM: An Efficient and High Concurrency Index Management Method Using Write-Ahead Logging](http://www.ics.uci.edu/~cs223/papers/p371-mohan.pdf),” at *ACM International Conference on Management of Data* (SIGMOD), June 1992. [doi:10.1145/130283.130338](http://dx.doi.org/10.1145/130283.130338)
+1. C. Mohan and Frank Levine: “[ARIES/IM: An Efficient and High Concurrency Index Management Method Using Write-Ahead Logging](http://www.ics.uci.edu/~cs223/papers/p371-mohan.pdf),” at _ACM International Conference on Management of Data_ (SIGMOD), June 1992. [doi:10.1145/130283.130338](http://dx.doi.org/10.1145/130283.130338)
 
-1. Howard Chu:  “[LDAP at Lightning Speed]( https://buildstuff14.sched.com/event/08a1a368e272eb599a52e08b4c3c779d),”  at *Build Stuff '14*, November 2014.
+1. Howard Chu: “[LDAP at Lightning Speed](https://buildstuff14.sched.com/event/08a1a368e272eb599a52e08b4c3c779d),” at _Build Stuff '14_, November 2014.
 
-1. Bradley C. Kuszmaul:  “[A   Comparison of Fractal Trees to Log-Structured Merge (LSM) Trees](http://insideanalysis.com/wp-content/uploads/2014/08/Tokutek_lsm-vs-fractal.pdf),” *tokutek.com*,  April 22, 2014.
+1. Bradley C. Kuszmaul: “[A Comparison of Fractal Trees to Log-Structured Merge (LSM) Trees](http://insideanalysis.com/wp-content/uploads/2014/08/Tokutek_lsm-vs-fractal.pdf),” _tokutek.com_, April 22, 2014.
 
-1. Manos Athanassoulis, Michael S. Kester, Lukas M. Maas, et al.: “[Designing Access Methods: The RUM Conjecture](http://openproceedings.org/2016/conf/edbt/paper-12.pdf),” at *19th International Conference on Extending Database Technology* (EDBT), March 2016.
-    [doi:10.5441/002/edbt.2016.42](http://dx.doi.org/10.5441/002/edbt.2016.42)
+1. Manos Athanassoulis, Michael S. Kester, Lukas M. Maas, et al.: “[Designing Access Methods: The RUM Conjecture](http://openproceedings.org/2016/conf/edbt/paper-12.pdf),” at _19th International Conference on Extending Database Technology_ (EDBT), March 2016.
+   [doi:10.5441/002/edbt.2016.42](http://dx.doi.org/10.5441/002/edbt.2016.42)
 
-1. Peter Zaitsev: “[Innodb Double Write](https://www.percona.com/blog/2006/08/04/innodb-double-write/),” *percona.com*, August 4, 2006.
+1. Peter Zaitsev: “[Innodb Double Write](https://www.percona.com/blog/2006/08/04/innodb-double-write/),” _percona.com_, August 4, 2006.
 
-1. Tomas Vondra: “[On the Impact of Full-Page Writes](http://blog.2ndquadrant.com/on-the-impact-of-full-page-writes/),” *blog.2ndquadrant.com*, November 23, 2016.
+1. Tomas Vondra: “[On the Impact of Full-Page Writes](http://blog.2ndquadrant.com/on-the-impact-of-full-page-writes/),” _blog.2ndquadrant.com_, November 23, 2016.
 
-1. Mark Callaghan: “[The Advantages of an LSM vs a B-Tree](http://smalldatum.blogspot.co.uk/2016/01/summary-of-advantages-of-lsm-vs-b-tree.html),” *smalldatum.blogspot.co.uk*, January 19, 2016.
+1. Mark Callaghan: “[The Advantages of an LSM vs a B-Tree](http://smalldatum.blogspot.co.uk/2016/01/summary-of-advantages-of-lsm-vs-b-tree.html),” _smalldatum.blogspot.co.uk_, January 19, 2016.
 
-1. Mark Callaghan: “[Choosing Between Efficiency and Performance with RocksDB](http://www.codemesh.io/codemesh/mark-callaghan),” at *Code Mesh*, November 4, 2016.
+1. Mark Callaghan: “[Choosing Between Efficiency and Performance with RocksDB](http://www.codemesh.io/codemesh/mark-callaghan),” at _Code Mesh_, November 4, 2016.
 
-1. Michi Mutsuzaki: “[MySQL vs. LevelDB](https://github.com/m1ch1/mapkeeper/wiki/MySQL-vs.-LevelDB),” *github.com*, August 2011.
+1. Michi Mutsuzaki: “[MySQL vs. LevelDB](https://github.com/m1ch1/mapkeeper/wiki/MySQL-vs.-LevelDB),” _github.com_, August 2011.
 
-1. Benjamin Coverston, Jonathan Ellis, et al.: “[CASSANDRA-1608: Redesigned Compaction](https://issues.apache.org/jira/browse/CASSANDRA-1608), *issues.apache.org*, July 2011.
+1. Benjamin Coverston, Jonathan Ellis, et al.: “[CASSANDRA-1608: Redesigned Compaction](https://issues.apache.org/jira/browse/CASSANDRA-1608), _issues.apache.org_, July 2011.
 
 1. Igor Canadi, Siying Dong, and Mark Callaghan: “[RocksDB Tuning Guide](https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide),”
-    *github.com*, 2016.
+   _github.com_, 2016.
 
-1. [*MySQL 5.7 Reference Manual*](http://dev.mysql.com/doc/refman/5.7/en/index.html). Oracle, 2014.
+1. [_MySQL 5.7 Reference Manual_](http://dev.mysql.com/doc/refman/5.7/en/index.html). Oracle, 2014.
 
-1. [*Books Online for SQL Server 2012*](http://msdn.microsoft.com/en-us/library/ms130214.aspx). Microsoft, 2012.
+1. [_Books Online for SQL Server 2012_](http://msdn.microsoft.com/en-us/library/ms130214.aspx). Microsoft, 2012.
 
-1. Joe Webb: “[Using Covering Indexes to Improve Query Performance](https://www.simple-talk.com/sql/learn-sql-server/using-covering-indexes-to-improve-query-performance/),” *simple-talk.com*, 29 September 2008.
+1. Joe Webb: “[Using Covering Indexes to Improve Query Performance](https://www.simple-talk.com/sql/learn-sql-server/using-covering-indexes-to-improve-query-performance/),” _simple-talk.com_, 29 September 2008.
 
-1. Frank Ramsak, Volker Markl, Robert Fenk, et al.: “[Integrating the UB-Tree into a Database System Kernel](http://www.vldb.org/conf/2000/P263.pdf),” at *26th International Conference on Very Large Data Bases* (VLDB), September 2000.
+1. Frank Ramsak, Volker Markl, Robert Fenk, et al.: “[Integrating the UB-Tree into a Database System Kernel](http://www.vldb.org/conf/2000/P263.pdf),” at _26th International Conference on Very Large Data Bases_ (VLDB), September 2000.
 
-1. The PostGIS Development Group: “[PostGIS 2.1.2dev Manual](http://postgis.net/docs/manual-2.1/),” *postgis.net*, 2014.
+1. The PostGIS Development Group: “[PostGIS 2.1.2dev Manual](http://postgis.net/docs/manual-2.1/),” _postgis.net_, 2014.
 
-1. Robert Escriva, Bernard Wong, and Emin Gün Sirer: “[HyperDex: A Distributed, Searchable Key-Value Store](http://www.cs.princeton.edu/courses/archive/fall13/cos518/papers/hyperdex.pdf),” at *ACM SIGCOMM Conference*, August 2012. [doi:10.1145/2377677.2377681](http://dx.doi.org/10.1145/2377677.2377681)
+1. Robert Escriva, Bernard Wong, and Emin Gün Sirer: “[HyperDex: A Distributed, Searchable Key-Value Store](http://www.cs.princeton.edu/courses/archive/fall13/cos518/papers/hyperdex.pdf),” at _ACM SIGCOMM Conference_, August 2012. [doi:10.1145/2377677.2377681](http://dx.doi.org/10.1145/2377677.2377681)
 
-1. Michael McCandless: “[Lucene's FuzzyQuery Is 100 Times Faster in 4.0](http://blog.mikemccandless.com/2011/03/lucenes-fuzzyquery-is-100-times-faster.html),” *blog.mikemccandless.com*, March 24, 2011.
+1. Michael McCandless: “[Lucene's FuzzyQuery Is 100 Times Faster in 4.0](http://blog.mikemccandless.com/2011/03/lucenes-fuzzyquery-is-100-times-faster.html),” _blog.mikemccandless.com_, March 24, 2011.
 
-1. Steffen Heinz, Justin Zobel, and Hugh E. Williams: “[Burst Tries: A Fast, Efficient Data Structure for String Keys](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.18.3499),” *ACM Transactions on Information Systems*, volume 20, number 2, pages 192–223, April 2002. [doi:10.1145/506309.506312](http://dx.doi.org/10.1145/506309.506312)
+1. Steffen Heinz, Justin Zobel, and Hugh E. Williams: “[Burst Tries: A Fast, Efficient Data Structure for String Keys](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.18.3499),” _ACM Transactions on Information Systems_, volume 20, number 2, pages 192–223, April 2002. [doi:10.1145/506309.506312](http://dx.doi.org/10.1145/506309.506312)
 
-1. Klaus U. Schulz and Stoyan Mihov: “[Fast String Correction with Levenshtein Automata](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.16.652),” *International Journal on Document Analysis and Recognition*, volume 5, number 1, pages 67–85, November 2002. [doi:10.1007/s10032-002-0082-8](http://dx.doi.org/10.1007/s10032-002-0082-8)
+1. Klaus U. Schulz and Stoyan Mihov: “[Fast String Correction with Levenshtein Automata](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.16.652),” _International Journal on Document Analysis and Recognition_, volume 5, number 1, pages 67–85, November 2002. [doi:10.1007/s10032-002-0082-8](http://dx.doi.org/10.1007/s10032-002-0082-8)
 
-1. Christopher D. Manning, Prabhakar Raghavan, and Hinrich Schütze: [*Introduction to Information Retrieval*](http://nlp.stanford.edu/IR-book/). Cambridge University Press, 2008. ISBN: 978-0-521-86571-5, available online at *nlp.stanford.edu/IR-book*
+1. Christopher D. Manning, Prabhakar Raghavan, and Hinrich Schütze: [_Introduction to Information Retrieval_](http://nlp.stanford.edu/IR-book/). Cambridge University Press, 2008. ISBN: 978-0-521-86571-5, available online at _nlp.stanford.edu/IR-book_
 
-1. Michael Stonebraker, Samuel Madden, Daniel J. Abadi, et al.: “[The End of an Architectural Era (It’s Time for a Complete Rewrite)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.137.3697&rep=rep1&type=pdf),” at *33rd International Conference on Very Large Data Bases* (VLDB), September 2007.
+1. Michael Stonebraker, Samuel Madden, Daniel J. Abadi, et al.: “[The End of an Architectural Era (It’s Time for a Complete Rewrite)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.137.3697&rep=rep1&type=pdf),” at _33rd International Conference on Very Large Data Bases_ (VLDB), September 2007.
 
 1. “[VoltDB Technical Overview White Paper](https://www.voltdb.com/wptechnicaloverview),” VoltDB, 2014.
 
-1. Stephen M. Rumble, Ankita Kejriwal, and John K. Ousterhout: “[Log-Structured Memory for DRAM-Based Storage](https://www.usenix.org/system/files/conference/fast14/fast14-paper_rumble.pdf),” at *12th USENIX Conference on File and Storage Technologies* (FAST), February 2014.
+1. Stephen M. Rumble, Ankita Kejriwal, and John K. Ousterhout: “[Log-Structured Memory for DRAM-Based Storage](https://www.usenix.org/system/files/conference/fast14/fast14-paper_rumble.pdf),” at _12th USENIX Conference on File and Storage Technologies_ (FAST), February 2014.
 
-1. Stavros Harizopoulos, Daniel J. Abadi, Samuel Madden, and Michael Stonebraker: “[OLTP Through the Looking Glass, and What We Found There](http://hstore.cs.brown.edu/papers/hstore-lookingglass.pdf),” at *ACM International Conference on Management of Data*
-    (SIGMOD), June 2008. [doi:10.1145/1376616.1376713](http://dx.doi.org/10.1145/1376616.1376713)
+1. Stavros Harizopoulos, Daniel J. Abadi, Samuel Madden, and Michael Stonebraker: “[OLTP Through the Looking Glass, and What We Found There](http://hstore.cs.brown.edu/papers/hstore-lookingglass.pdf),” at _ACM International Conference on Management of Data_
+   (SIGMOD), June 2008. [doi:10.1145/1376616.1376713](http://dx.doi.org/10.1145/1376616.1376713)
 
-1. Justin DeBrabant, Andrew Pavlo, Stephen Tu, et al.: “[Anti-Caching: A New Approach to Database Management System Architecture](http://www.vldb.org/pvldb/vol6/p1942-debrabant.pdf),” *Proceedings of the VLDB Endowment*, volume 6, number 14, pages 1942–1953, September 2013.
+1. Justin DeBrabant, Andrew Pavlo, Stephen Tu, et al.: “[Anti-Caching: A New Approach to Database Management System Architecture](http://www.vldb.org/pvldb/vol6/p1942-debrabant.pdf),” _Proceedings of the VLDB Endowment_, volume 6, number 14, pages 1942–1953, September 2013.
 
-1. Joy Arulraj, Andrew Pavlo, and Subramanya R. Dulloor: “[Let's Talk About Storage & Recovery Methods for Non-Volatile Memory Database Systems](http://www.pdl.cmu.edu/PDL-FTP/NVM/storage.pdf),” at *ACM International Conference on Management of Data* (SIGMOD), June 2015. [doi:10.1145/2723372.2749441](http://dx.doi.org/10.1145/2723372.2749441)
+1. Joy Arulraj, Andrew Pavlo, and Subramanya R. Dulloor: “[Let's Talk About Storage & Recovery Methods for Non-Volatile Memory Database Systems](http://www.pdl.cmu.edu/PDL-FTP/NVM/storage.pdf),” at _ACM International Conference on Management of Data_ (SIGMOD), June 2015. [doi:10.1145/2723372.2749441](http://dx.doi.org/10.1145/2723372.2749441)
 
 1. Edgar F. Codd, S. B. Codd, and C. T. Salley: “[Providing OLAP to User-Analysts: An IT Mandate](http://www.minet.uni-jena.de/dbis/lehre/ss2005/sem_dwh/lit/Cod93.pdf),” E. F. Codd Associates, 1993.
 
-1. Surajit Chaudhuri and Umeshwar Dayal: “[An Overview of Data Warehousing and OLAP Technology](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/sigrecord.pdf),” *ACM SIGMOD Record*, volume 26, number 1, pages 65–74, March 1997. [doi:10.1145/248603.248616](http://dx.doi.org/10.1145/248603.248616)
+1. Surajit Chaudhuri and Umeshwar Dayal: “[An Overview of Data Warehousing and OLAP Technology](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/sigrecord.pdf),” _ACM SIGMOD Record_, volume 26, number 1, pages 65–74, March 1997. [doi:10.1145/248603.248616](http://dx.doi.org/10.1145/248603.248616)
 
-1. Per-Åke Larson, Cipri Clinciu, Campbell Fraser, et al.: “[Enhancements to SQL Server Column Stores](http://research.microsoft.com/pubs/193599/Apollo3%20-%20Sigmod%202013%20-%20final.pdf),” at *ACM International Conference on Management of Data* (SIGMOD), June 2013.
+1. Per-Åke Larson, Cipri Clinciu, Campbell Fraser, et al.: “[Enhancements to SQL Server Column Stores](http://research.microsoft.com/pubs/193599/Apollo3%20-%20Sigmod%202013%20-%20final.pdf),” at _ACM International Conference on Management of Data_ (SIGMOD), June 2013.
 
-1. Franz Färber, Norman May, Wolfgang Lehner, et al.: “[The SAP HANA Database – An Architecture Overview](http://sites.computer.org/debull/A12mar/hana.pdf),” *IEEE Data Engineering Bulletin*, volume 35, number 1, pages 28–33, March 2012.
+1. Franz Färber, Norman May, Wolfgang Lehner, et al.: “[The SAP HANA Database – An Architecture Overview](http://sites.computer.org/debull/A12mar/hana.pdf),” _IEEE Data Engineering Bulletin_, volume 35, number 1, pages 28–33, March 2012.
 
-1. Michael Stonebraker: “[The Traditional RDBMS Wisdom Is (Almost Certainly) All Wrong](http://slideshot.epfl.ch/talks/166),” presentation at *EPFL*, May 2013.
+1. Michael Stonebraker: “[The Traditional RDBMS Wisdom Is (Almost Certainly) All Wrong](http://slideshot.epfl.ch/talks/166),” presentation at _EPFL_, May 2013.
 
-1. Daniel J. Abadi: “[Classifying the SQL-on-Hadoop Solutions](https://web.archive.org/web/20150622074951/http://hadapt.com/blog/2013/10/02/classifying-the-sql-on-hadoop-solutions/),” *hadapt.com*, October 2, 2013.
+1. Daniel J. Abadi: “[Classifying the SQL-on-Hadoop Solutions](https://web.archive.org/web/20150622074951/http://hadapt.com/blog/2013/10/02/classifying-the-sql-on-hadoop-solutions/),” _hadapt.com_, October 2, 2013.
 
-1. Marcel Kornacker, Alexander Behm, Victor Bittorf, et al.: “[Impala: A Modern, Open-Source SQL Engine for Hadoop](http://pandis.net/resources/cidr15impala.pdf),” at *7th Biennial Conference on Innovative Data Systems Research* (CIDR), January 2015.
+1. Marcel Kornacker, Alexander Behm, Victor Bittorf, et al.: “[Impala: A Modern, Open-Source SQL Engine for Hadoop](http://pandis.net/resources/cidr15impala.pdf),” at _7th Biennial Conference on Innovative Data Systems Research_ (CIDR), January 2015.
 
-1. Sergey Melnik, Andrey Gubarev, Jing Jing Long, et al.: “[Dremel: Interactive Analysis of Web-Scale Datasets](http://research.google.com/pubs/pub36632.html),” at *36th International Conference on Very Large Data Bases* (VLDB), pages
-    330–339, September 2010.
+1. Sergey Melnik, Andrey Gubarev, Jing Jing Long, et al.: “[Dremel: Interactive Analysis of Web-Scale Datasets](http://research.google.com/pubs/pub36632.html),” at _36th International Conference on Very Large Data Bases_ (VLDB), pages
+   330–339, September 2010.
 
-1. Ralph Kimball and Margy Ross: *The Data Warehouse Toolkit: The Definitive Guide to Dimensional Modeling*, 3rd edition. John Wiley & Sons, July 2013. ISBN: 978-1-118-53080-1
+1. Ralph Kimball and Margy Ross: _The Data Warehouse Toolkit: The Definitive Guide to Dimensional Modeling_, 3rd edition. John Wiley & Sons, July 2013. ISBN: 978-1-118-53080-1
 
-1. Derrick Harris: “[Why Apple, eBay, and Walmart Have Some of the Biggest Data Warehouses You’ve Ever Seen](http://gigaom.com/2013/03/27/why-apple-ebay-and-walmart-have-some-of-the-biggest-data-warehouses-youve-ever-seen/),” *gigaom.com*, March 27, 2013.
+1. Derrick Harris: “[Why Apple, eBay, and Walmart Have Some of the Biggest Data Warehouses You’ve Ever Seen](http://gigaom.com/2013/03/27/why-apple-ebay-and-walmart-have-some-of-the-biggest-data-warehouses-youve-ever-seen/),” _gigaom.com_, March 27, 2013.
 
-1. Julien Le Dem: “[Dremel Made Simple with Parquet](https://blog.twitter.com/2013/dremel-made-simple-with-parquet),” *blog.twitter.com*, September 11, 2013.
+1. Julien Le Dem: “[Dremel Made Simple with Parquet](https://blog.twitter.com/2013/dremel-made-simple-with-parquet),” _blog.twitter.com_, September 11, 2013.
 
-1. Daniel J. Abadi, Peter Boncz, Stavros Harizopoulos, et al.: “[The Design and Implementation of Modern Column-Oriented Database Systems](http://cs-www.cs.yale.edu/homes/dna/papers/abadi-column-stores.pdf),” *Foundations and Trends in Databases*, volume 5, number 3, pages 197–280, December 2013. [doi:10.1561/1900000024](http://dx.doi.org/10.1561/1900000024)
+1. Daniel J. Abadi, Peter Boncz, Stavros Harizopoulos, et al.: “[The Design and Implementation of Modern Column-Oriented Database Systems](http://cs-www.cs.yale.edu/homes/dna/papers/abadi-column-stores.pdf),” _Foundations and Trends in Databases_, volume 5, number 3, pages 197–280, December 2013. [doi:10.1561/1900000024](http://dx.doi.org/10.1561/1900000024)
 
 1. Peter Boncz, Marcin Zukowski, and Niels Nes: “[MonetDB/X100: Hyper-Pipelining Query Execution](http://www.cidrdb.org/cidr2005/papers/P19.pdf),”
-    at *2nd Biennial Conference on Innovative Data Systems Research* (CIDR), January 2005.
+   at _2nd Biennial Conference on Innovative Data Systems Research_ (CIDR), January 2005.
 
 1. Jingren Zhou and Kenneth A. Ross: “[Implementing Database Operations Using SIMD Instructions](http://www1.cs.columbia.edu/~kar/pubsk/simd.pdf),”
-    at *ACM International Conference on Management of Data* (SIGMOD), pages 145–156, June 2002.
-    [doi:10.1145/564691.564709](http://dx.doi.org/10.1145/564691.564709)
+   at _ACM International Conference on Management of Data_ (SIGMOD), pages 145–156, June 2002.
+   [doi:10.1145/564691.564709](http://dx.doi.org/10.1145/564691.564709)
 
 1. Michael Stonebraker, Daniel J. Abadi, Adam Batkin, et al.: “[C-Store: A Column-oriented DBMS](http://www.vldb2005.org/program/paper/thu/p553-stonebraker.pdf),”
-    at *31st International Conference on Very Large Data Bases* (VLDB), pages 553–564, September 2005.
+   at _31st International Conference on Very Large Data Bases_ (VLDB), pages 553–564, September 2005.
 
-1. Andrew Lamb, Matt Fuller, Ramakrishna Varadarajan, et al.: “[The Vertica Analytic Database: C-Store 7 Years Later](http://vldb.org/pvldb/vol5/p1790_andrewlamb_vldb2012.pdf),” *Proceedings of the VLDB Endowment*, volume 5, number 12, pages 1790–1801, August 2012.
+1. Andrew Lamb, Matt Fuller, Ramakrishna Varadarajan, et al.: “[The Vertica Analytic Database: C-Store 7 Years Later](http://vldb.org/pvldb/vol5/p1790_andrewlamb_vldb2012.pdf),” _Proceedings of the VLDB Endowment_, volume 5, number 12, pages 1790–1801, August 2012.
 
-1. Julien Le Dem and Nong Li: “[Efficient Data Storage for Analytics with Apache Parquet 2.0](http://www.slideshare.net/julienledem/th-210pledem),” at *Hadoop Summit*, San Jose, June 2014.
+1. Julien Le Dem and Nong Li: “[Efficient Data Storage for Analytics with Apache Parquet 2.0](http://www.slideshare.net/julienledem/th-210pledem),” at _Hadoop Summit_, San Jose, June 2014.
 
-1. Jim Gray, Surajit Chaudhuri, Adam Bosworth, et al.: “[Data Cube: A Relational Aggregation Operator Generalizing Group-By, Cross-Tab, and Sub-Totals](http://arxiv.org/pdf/cs/0701155.pdf),” *Data Mining and Knowledge Discovery*, volume 1, number 1, pages 29–53, March 2007. [doi:10.1023/A:1009726021843](http://dx.doi.org/10.1023/A:1009726021843)
+1. Jim Gray, Surajit Chaudhuri, Adam Bosworth, et al.: “[Data Cube: A Relational Aggregation Operator Generalizing Group-By, Cross-Tab, and Sub-Totals](http://arxiv.org/pdf/cs/0701155.pdf),” _Data Mining and Knowledge Discovery_, volume 1, number 1, pages 29–53, March 2007. [doi:10.1023/A:1009726021843](http://dx.doi.org/10.1023/A:1009726021843)
