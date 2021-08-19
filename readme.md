@@ -1,6 +1,6 @@
 # 设计数据密集型应用 - 中文翻译
 
-> 由于个人喜好和为了存档创建了该分支，不定时同步原仓库，使用前请思虑
+> 由于个人喜好和为了存档创建了该分支，不定时同步原仓库，使用前请思虑。阅读地址：https://slyerr.github.io/ddia/#/
 
 - 作者： [Martin Kleppmann](https://martin.kleppmann.com)
 - 原名：[《Designing Data-Intensive Applications》](http://shop.oreilly.com/product/0636920032175.do)
