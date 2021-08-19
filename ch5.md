@@ -917,8 +917,4 @@
 
 1.  Reinhard Schwarz and Friedemann Mattern: “[Detecting Causal Relationships in Distributed Computations: In Search of the Holy Grail](http://dcg.ethz.ch/lectures/hs08/seminar/papers/mattern4.pdf),” *Distributed Computing*, volume 7, number 3, pages 149–174, March 1994. [doi:10.1007/BF02277859](http://dx.doi.org/10.1007/BF02277859)
 
---------
 
-|               上一章               |              目录               |         下一章         |
-| :--------------------------------: | :-----------------------------: | :--------------------: |
-| [第二部分：分布式数据](part-ii.md) | [设计数据密集型应用](README.md) | [第六章：分区](ch6.md) |

@@ -92,9 +92,3 @@
 
 3. Michael Stonebraker: “[The Case for Shared Nothing](http://db.cs.berkeley.edu/papers/hpts85-nothing.pdf),” IEEE Database EngineeringBulletin, volume 9, number 1, pages 4–9, March 1986.
 4. Frank McSherry, Michael Isard, and Derek G. Murray: “[Scalability! But at What COST?](http://www.frankmcsherry.org/assets/COST.pdf),” at 15th USENIX Workshop on Hot Topics in Operating Systems (HotOS),May 2015.
-
-------
-
-| 上一章                       | 目录                            | 下一章                 |
-| ---------------------------- | ------------------------------- | ---------------------- |
-| [第四章：编码与演化](ch4.md) | [设计数据密集型应用](README.md) | [第五章：复制](ch5.md) |

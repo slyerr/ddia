@@ -943,8 +943,4 @@ WHERE room_id = 123 AND
 54. Dave Rosenthal: “[Databases at 14.4MHz](http://web.archive.org/web/20150427041746/http://blog.foundationdb.com/databases-at-14.4mhz),” *blog.foundationdb.com*, December 10, 2014.
 
 
-------
 
-| 上一章                 | 目录                            | 下一章                             |
-| ---------------------- | ------------------------------- | ---------------------------------- |
-| [第六章：分区](ch6.md) | [设计数据密集型应用](README.md) | [第八章：分布式系统的麻烦](ch8.md) |
