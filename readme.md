@@ -8,9 +8,9 @@
 - 校订： [@yingang](https://github.com/yingang)
 - 繁体：[繁體中文版本](zh-tw/README.md) by [@afunTW](https://github.com/afunTW)
 
-> 使用 [Typora](https://www.typora.io)、[Gitbook](https://vonng.gitbooks.io/ddia-cn/content/)，[Github Pages](https://vonng.github.io/ddia)以获取最佳阅读体验。
+> 使用 [Typora](https://www.typora.io)、[Gitbook](https://vonng.gitbooks.io/ddia-cn/content/)，[Github Pages](https://vonng.github.io/ddia) 以获取最佳阅读体验。
 >
-> 本地：您可在项目根目录中执行`make`，并通过浏览器阅读（[在线预览](http://ddia.vonng.com/#/)）。
+> 本地：您可在项目根目录中执行 `make`，并通过浏览器阅读（[在线预览](http://ddia.vonng.com/#/)）。
 
 ## 译序
 
@@ -136,10 +136,10 @@
 0. 全文校订 by [@yingang](https://github.com/yingang)
 1. [序言初翻修正](https://github.com/Vonng/ddia/commit/afb5edab55c62ed23474149f229677e3b42dfc2c) by [@seagullbird](https://github.com/Vonng/ddia/commits?author=seagullbird)
 2. [第一章语法标点校正](https://github.com/Vonng/ddia/commit/973b12cd8f8fcdf4852f1eb1649ddd9d187e3644) by [@nevertiree](https://github.com/Vonng/ddia/commits?author=nevertiree)
-3. [第六章部分校正](https://github.com/Vonng/ddia/commit/d4eb0852c0ec1e93c8aacc496c80b915bb1e6d48) 与[第 10 章的初翻](https://github.com/Vonng/ddia/commit/9de8dbd1bfe6fbb03b3bf6c1a1aa2291aed2490e) by @[MuAlex](https://github.com/Vonng/ddia/commits?author=MuAlex)
-4. [第一部分](part-i.md)前言，[ch2](ch2.md)校正 by [@jiajiadebug](https://github.com/Vonng/ddia/commits?author=jiajiadebug)
-5. [词汇表](glossary.md)、[后记]()关于野猪的部分 by @[Chowss](https://github.com/Vonng/ddia/commits?author=Chowss)
-6. [繁體中文](https://github.com/Vonng/ddia/pulls)版本与转换脚本 by [@afunTW](https://github.com/afunTW)
+3. [第六章部分校正](https://github.com/Vonng/ddia/commit/d4eb0852c0ec1e93c8aacc496c80b915bb1e6d48) 与 [第 10 章的初翻](https://github.com/Vonng/ddia/commit/9de8dbd1bfe6fbb03b3bf6c1a1aa2291aed2490e) by @[MuAlex](https://github.com/Vonng/ddia/commits?author=MuAlex)
+4. [第一部分](part-i.md) 前言，[ch2](ch2.md) 校正 by [@jiajiadebug](https://github.com/Vonng/ddia/commits?author=jiajiadebug)
+5. [词汇表](glossary.md)、[后记]() 关于野猪的部分 by @[Chowss](https://github.com/Vonng/ddia/commits?author=Chowss)
+6. [繁體中文](https://github.com/Vonng/ddia/pulls) 版本与转换脚本 by [@afunTW](https://github.com/afunTW)
 7. 感谢所有作出贡献，提出意见的朋友们：
 
 <details>
@@ -153,7 +153,7 @@
 | [119](https://github.com/Vonng/ddia/pull/119) | [@cclauss](https://github.com/cclauss)               | Streamline file operations in convert()                        |
 | [118](https://github.com/Vonng/ddia/pull/118) | [@yingang](https://github.com/yingang)               | translation updates (chapter 2 and 4)                          |
 | [117](https://github.com/Vonng/ddia/pull/117) | [@feeeei](https://github.com/feeeei)                 | 统一每章的标题格式                                             |
-| [115](https://github.com/Vonng/ddia/pull/115) | [@NageNalock](https://github.com/NageNalock)         | 第七章病句修改: 重复词语                                       |
+| [115](https://github.com/Vonng/ddia/pull/115) | [@NageNalock](https://github.com/NageNalock)         | 第七章病句修改 : 重复词语                                       |
 | [114](https://github.com/Vonng/ddia/pull/114) | [@Sunt-ing](https://github.com/Sunt-ing)             | Update README.md: correct the book name                        |
 | [113](https://github.com/Vonng/ddia/pull/113) | [@lpxxn](https://github.com/lpxxn)                   | 修改语句                                                       |
 | [112](https://github.com/Vonng/ddia/pull/112) | [@ibyte2011](https://github.com/ibyte2011)           | Update ch9.md                                                  |
@@ -164,7 +164,7 @@
 | [104](https://github.com/Vonng/ddia/pull/104) | [@Sunt-ing](https://github.com/Sunt-ing)             | several advice for better translation                          |
 | [103](https://github.com/Vonng/ddia/pull/103) | [@Sunt-ing](https://github.com/Sunt-ing)             | typo in ch4: should be 完成 rather than 完全                   |
 | [102](https://github.com/Vonng/ddia/pull/102) | [@Sunt-ing](https://github.com/Sunt-ing)             | ch4: better-translation: 扼杀 → 破坏                           |
-| [101](https://github.com/Vonng/ddia/pull/101) | [@Sunt-ing](https://github.com/Sunt-ing)             | typo in Ch4: should be "改变" rathr than "盖面"                |
+| [101](https://github.com/Vonng/ddia/pull/101) | [@Sunt-ing](https://github.com/Sunt-ing)             | typo in Ch4: should be " 改变 " rathr than " 盖面 "                |
 | [100](https://github.com/Vonng/ddia/pull/100) | [@LiminCode](https://github.com/LiminCode)           | fix missing translation                                        |
 | [99 ](https://github.com/Vonng/ddia/pull/99)  | [@mrdrivingduck](https://github.com/mrdrivingduck)   | ch6: fix the word rebalancing                                  |
 | [98 ](https://github.com/Vonng/ddia/pull/98)  | [@jacklightChen](https://github.com/jacklightChen)   | fix ch7.md: fix wrong references                               |
@@ -190,9 +190,9 @@
 | [66 ](https://github.com/Vonng/ddia/pull/66)  | [@blindpirate](https://github.com/blindpirate)       | Fix typo                                                       |
 | [63 ](https://github.com/Vonng/ddia/pull/63)  | [@haifeiWu](https://github.com/haifeiWu)             | Update ch10.md                                                 |
 | [62 ](https://github.com/Vonng/ddia/pull/62)  | [@ych](https://github.com/ych)                       | fix ch1.md typesetting problem                                 |
-| [61 ](https://github.com/Vonng/ddia/pull/61)  | [@xianlaioy](https://github.com/xianlaioy)           | docs:钟-->种，去掉 ou                                          |
+| [61 ](https://github.com/Vonng/ddia/pull/61)  | [@xianlaioy](https://github.com/xianlaioy)           | docs: 钟--> 种，去掉 ou                                          |
 | [60 ](https://github.com/Vonng/ddia/pull/60)  | [@Zombo1296](https://github.com/Zombo1296)           | 否则 -> 或者                                                   |
-| [59 ](https://github.com/Vonng/ddia/pull/59)  | [@AlexanderMisel](https://github.com/AlexanderMisel) | 呼叫->调用，显着->显著                                         |
+| [59 ](https://github.com/Vonng/ddia/pull/59)  | [@AlexanderMisel](https://github.com/AlexanderMisel) | 呼叫-> 调用，显着-> 显著                                         |
 | [58 ](https://github.com/Vonng/ddia/pull/58)  | [@ibyte2011](https://github.com/ibyte2011)           | Update ch8.md                                                  |
 | [55 ](https://github.com/Vonng/ddia/pull/55)  | [@saintube](https://github.com/saintube)             | ch8: 修改链接错误                                              |
 | [54 ](https://github.com/Vonng/ddia/pull/54)  | [@Panmax](https://github.com/Panmax)                 | Update ch2.md                                                  |
@@ -205,11 +205,11 @@
 | [47 ](https://github.com/Vonng/ddia/pull/47)  | [@lzwill](https://github.com/lzwill)                 | Fixed typos in ch2                                             |
 | [45 ](https://github.com/Vonng/ddia/pull/45)  | [@zenuo](https://github.com/zenuo)                   | 删除一个多余的右括号                                           |
 | [44 ](https://github.com/Vonng/ddia/pull/44)  | [@akxxsb](https://github.com/akxxsb)                 | 修正第 7 章底部链接错误                                        |
-| [43 ](https://github.com/Vonng/ddia/pull/43)  | [@baijinping](https://github.com/baijinping)         | "更假简单"->"更加简单"                                         |
+| [43 ](https://github.com/Vonng/ddia/pull/43)  | [@baijinping](https://github.com/baijinping)         | " 更假简单 "->" 更加简单 "                                         |
 | [42 ](https://github.com/Vonng/ddia/pull/42)  | [@tisonkun](https://github.com/tisonkun)             | 修复 ch1 中的无序列表格式                                      |
 | [38 ](https://github.com/Vonng/ddia/pull/38)  | [@renjie-c](https://github.com/renjie-c)             | 纠正多处的翻译小错误                                           |
 | [37 ](https://github.com/Vonng/ddia/pull/37)  | [@tankilo](https://github.com/tankilo)               | fix translation mistakes in ch4.md                             |
-| [36 ](https://github.com/Vonng/ddia/pull/36)  | [@wwek](https://github.com/wwek)                     | 1.修复多个链接错误 2.名词优化修订 3.错误修订                   |
+| [36 ](https://github.com/Vonng/ddia/pull/36)  | [@wwek](https://github.com/wwek)                     | 1. 修复多个链接错误 2. 名词优化修订 3. 错误修订                   |
 | [35 ](https://github.com/Vonng/ddia/pull/35)  | [@wwek](https://github.com/wwek)                     | fix ch7.md to ch8.md link error                                |
 | [34 ](https://github.com/Vonng/ddia/pull/34)  | [@wwek](https://github.com/wwek)                     | Merge pull request #1 from Vonng/master                        |
 | [33 ](https://github.com/Vonng/ddia/pull/33)  | [@wwek](https://github.com/wwek)                     | fix part-ii.md link error                                      |
