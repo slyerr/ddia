@@ -28,11 +28,16 @@
       loadNavbar: false,
       mergeNavbar: true,
       relativePath: true,
-      maxLevel: 5,
-      subMaxLevel: 5,
+      maxLevel: 4,
+      subMaxLevel: 3,
       search: {
         maxAge: 86400000,
         paths: 'auto'
+      },
+      progress: {
+        position: "top",
+        color: "var(--theme-color,#42b983)",
+        height: "3px",
       }
     };
   </script>
@@ -42,7 +47,8 @@
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-markdown.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-nginx.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pangu/lib/pangu.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-progress@latest/dist/progress.min.js"></script>
 </body>
 
 </html>
