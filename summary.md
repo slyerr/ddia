@@ -1,5 +1,3 @@
-# 目录
-
 * [简介](README.md)
 * [序言](preface.md)
 * [第一部分：数据系统基础](part-i.md)
